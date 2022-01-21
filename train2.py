@@ -204,7 +204,7 @@ def test_c(net, test_data, base_path):
 
         test_loader = torch.utils.data.DataLoader(
             test_data,
-            batch_size=args.eval_batch_size,
+            batch_size=100,
             shuffle=False,
             num_workers=8,
             pin_memory=True)
