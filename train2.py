@@ -167,23 +167,7 @@ def train(epoch):
                         100.*correct/total, correct, total))
     return (train_loss/batch_idx, reg_loss/batch_idx, 100.*correct/total)
 
-# def test(net, test_loader):
-#     """Evaluate network on given dataset."""
-#     net.eval()
-#     total_loss = 0.
-#     total_correct = 0
-#     with torch.no_grad():
-#         for images, targets in test_loader:
-#             images, targets = images.cuda(), targets.cuda()
-#             logits = net(images)
-#             loss = F.cross_entropy(logits, targets)
-#             pred = logits.data.max(1)[1]
-#             total_loss += float(loss.data)
-#             total_correct += pred.eq(targets.data).sum().item()
-
-#     return total_loss / len(test_loader.dataset), total_correct / len(test_loader.dataset)
-
-def test(epoch):
+def test(net, testloader):
     global best_acc
     net.eval()
     test_loss = 0
@@ -206,11 +190,9 @@ def test(epoch):
                      % (test_loss/(batch_idx+1), 100.*correct/total,
                         correct, total))
     acc = 100.*correct/total
-    if epoch == start_epoch + args.epoch - 1 or acc > best_acc:
-        checkpoint(acc, epoch)
     if acc > best_acc:
         best_acc = acc
-    return (test_loss/batch_idx, 100.*correct/total)
+    return (test_loss/batch_idx, acc)
 
 def test_c(net, test_data, base_path):
     """Evaluate network on given corrupted dataset."""
@@ -233,20 +215,6 @@ def test_c(net, test_data, base_path):
             corruption, test_loss, 100 - 100. * test_acc))
 
     return np.mean(corruption_accs)
-
-def checkpoint(acc, epoch):
-    # Save checkpoint.
-    print('Saving..')
-    state = {
-        'net': net,
-        'acc': acc,
-        'epoch': epoch,
-        'rng_state': torch.get_rng_state()
-    }
-    if not os.path.isdir('checkpoint'):
-        os.mkdir('checkpoint')
-    torch.save(state, './checkpoint/ckpt.t7' + args.name + '_'
-               + str(args.seed))
 
 def adjust_learning_rate(optimizer, epoch):
     """decrease the learning rate at 100 and 150 epoch"""
