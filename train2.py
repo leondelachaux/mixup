@@ -55,14 +55,15 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 if args.seed != 0:
     torch.manual_seed(args.seed)
 
-train_transform = transforms.Compose([
+transform_train = transforms.Compose([
     transforms.RandomCrop(32, padding=4),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465),
                          (0.2023, 0.1994, 0.2010)),
 ])
-test_transform = transforms.Compose([
+
+transform_test = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
@@ -166,21 +167,50 @@ def train(epoch):
                         100.*correct/total, correct, total))
     return (train_loss/batch_idx, reg_loss/batch_idx, 100.*correct/total)
 
-def test(net, test_loader):
-    """Evaluate network on given dataset."""
-    net.eval()
-    total_loss = 0.
-    total_correct = 0
-    with torch.no_grad():
-        for images, targets in test_loader:
-            images, targets = images.cuda(), targets.cuda()
-            logits = net(images)
-            loss = F.cross_entropy(logits, targets)
-            pred = logits.data.max(1)[1]
-            total_loss += float(loss.data)
-            total_correct += pred.eq(targets.data).sum().item()
+# def test(net, test_loader):
+#     """Evaluate network on given dataset."""
+#     net.eval()
+#     total_loss = 0.
+#     total_correct = 0
+#     with torch.no_grad():
+#         for images, targets in test_loader:
+#             images, targets = images.cuda(), targets.cuda()
+#             logits = net(images)
+#             loss = F.cross_entropy(logits, targets)
+#             pred = logits.data.max(1)[1]
+#             total_loss += float(loss.data)
+#             total_correct += pred.eq(targets.data).sum().item()
 
-    return total_loss / len(test_loader.dataset), total_correct / len(test_loader.dataset)
+#     return total_loss / len(test_loader.dataset), total_correct / len(test_loader.dataset)
+
+def test(epoch):
+    global best_acc
+    net.eval()
+    test_loss = 0
+    correct = 0
+    total = 0
+    for batch_idx, (inputs, targets) in enumerate(testloader):
+        if use_cuda:
+            inputs, targets = inputs.cuda(), targets.cuda()
+        inputs, targets = Variable(inputs, volatile=True), Variable(targets)
+        outputs = net(inputs)
+        loss = criterion(outputs, targets)
+
+        test_loss += loss.data
+        _, predicted = torch.max(outputs.data, 1)
+        total += targets.size(0)
+        correct += predicted.eq(targets.data).cpu().sum()
+
+        progress_bar(batch_idx, len(testloader),
+                     'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                     % (test_loss/(batch_idx+1), 100.*correct/total,
+                        correct, total))
+    acc = 100.*correct/total
+    if epoch == start_epoch + args.epoch - 1 or acc > best_acc:
+        checkpoint(acc, epoch)
+    if acc > best_acc:
+        best_acc = acc
+    return (test_loss/batch_idx, 100.*correct/total)
 
 def test_c(net, test_data, base_path):
     """Evaluate network on given corrupted dataset."""
