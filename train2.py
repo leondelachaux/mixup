@@ -167,13 +167,13 @@ def train(epoch):
                         100.*correct/total, correct, total))
     return (train_loss/batch_idx, reg_loss/batch_idx, 100.*correct/total)
 
-def test(net, testloader):
+def test(net, test_loader):
     global best_acc
     net.eval()
     test_loss = 0
     correct = 0
     total = 0
-    for batch_idx, (inputs, targets) in enumerate(testloader):
+    for batch_idx, (inputs, targets) in enumerate(test_loader):
         if use_cuda:
             inputs, targets = inputs.cuda(), targets.cuda()
         inputs, targets = Variable(inputs, volatile=True), Variable(targets)
@@ -185,7 +185,7 @@ def test(net, testloader):
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
 
-        progress_bar(batch_idx, len(testloader),
+        progress_bar(batch_idx, len(test_loader),
                      'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                      % (test_loss/(batch_idx+1), 100.*correct/total,
                         correct, total))
@@ -204,7 +204,7 @@ def test_c(net, test_data, base_path):
 
         test_loader = torch.utils.data.DataLoader(
             test_data,
-            batch_size=100,
+            batch_size=args.eval_batch_size,
             shuffle=False,
             num_workers=8,
             pin_memory=True)
