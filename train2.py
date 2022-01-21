@@ -206,7 +206,7 @@ def test_c(net, test_data, base_path):
             test_data,
             batch_size=100,
             shuffle=False,
-            num_workers=args.num_workers,
+            num_workers=8,
             pin_memory=True)
 
         test_loss, test_acc = test(net, test_loader)
