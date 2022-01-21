@@ -36,7 +36,7 @@ parser.add_argument('--resume', '-r', action='store_true',
 parser.add_argument('--model', default="ResNet18", type=str,
                     help='model type (default: ResNet18)')
 parser.add_argument('--name', default='0', type=str, help='name of run')
-
+parser.add_argument('--seed', default=0, type=int, help='random seed')
 parser.add_argument('--batch-size', default=128, type=int, help='batch size')
 parser.add_argument('--epoch', default=200, type=int,
                     help='total epochs to run')
@@ -52,8 +52,8 @@ use_cuda = torch.cuda.is_available()
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
-torch.manual_seed(1)
-np.random.seed(1)
+if args.seed != 0:
+    torch.manual_seed(args.seed)
 
 # Load datasets
 train_transform = transforms.Compose(
