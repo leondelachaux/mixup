@@ -235,11 +235,11 @@ if not os.path.exists(logname):
 
 for epoch in range(start_epoch, args.epoch):
     train_loss, reg_loss, train_acc = train(epoch)
-    test_loss, test_acc = test(epoch)
+    test_loss, test_acc = test(net, testloader)
     adjust_learning_rate(optimizer, epoch)
     with open(logname, 'a') as logfile:
         logwriter = csv.writer(logfile, delimiter=',')
         logwriter.writerow([epoch, train_loss, reg_loss, train_acc, test_loss,
                             test_acc])
 
-test_c_acc = test_c(net, testset, './data/cifar/CIFAR-10-C/')
+test_c_acc = test_c(net, testloader, './data/cifar/CIFAR-10-C/')
