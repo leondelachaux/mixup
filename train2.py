@@ -73,6 +73,13 @@ test_data = datasets.CIFAR10(
 base_c_path = './data/cifar/CIFAR-10-C/'
 num_classes = 10
 
+trainloader = torch.utils.data.DataLoader(train_data,
+                                          batch_size=args.batch_size,
+                                          shuffle=True, num_workers=8)
+
+testloader = torch.utils.data.DataLoader(test_data, batch_size=100,
+                                         shuffle=False, num_workers=8)
+
 # Model
 if args.resume:
     # Load checkpoint.
