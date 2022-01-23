@@ -226,7 +226,7 @@ def checkpoint(net):
     if not os.path.isdir('checkpoint'):
         os.mkdir('checkpoint')
     
-    torch.save(net.state_dict(), './checkpoint/ckpt.tar')
+    torch.save(net.state_dict(), './model.pth')
 
 def adjust_learning_rate(optimizer, epoch):
     """decrease the learning rate at 100 and 150 epoch"""
