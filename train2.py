@@ -19,6 +19,8 @@ import torch.optim as optim
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 
+from models.allconv import AllConvNet
+
 import models
 from utils import progress_bar
 
@@ -96,7 +98,8 @@ if args.resume:
     torch.set_rng_state(rng_state)
 else:
     print('==> Building model..')
-    net = models.__dict__[args.model]()
+    # net = models.__dict__[args.model]()
+    net = AllConvNet(num_classes)
 
 if not os.path.isdir('results'):
     os.mkdir('results')
@@ -241,4 +244,4 @@ for epoch in range(start_epoch, args.epoch):
         logwriter.writerow([epoch, train_loss, reg_loss, train_acc, test_loss,
                             test_acc])
 
-test_c_acc = test_c(net, test_data, './data/cifar/CIFAR-10-C/')
+test_c_acc = test_c(net, testloader, './data/cifar/CIFAR-10-C/')
