@@ -219,6 +219,15 @@ def test_c(net, test_data, base_path):
 
     return np.mean(corruption_accs)
 
+def checkpoint(net):
+    # Save checkpoint.
+    print('Saving..')
+
+    if not os.path.isdir('checkpoint'):
+        os.mkdir('checkpoint')
+    
+    torch.save(net.state_dict(), './checkpoint/ckpt.tar')
+
 def adjust_learning_rate(optimizer, epoch):
     """decrease the learning rate at 100 and 150 epoch"""
     lr = args.lr
@@ -246,4 +255,4 @@ for epoch in range(start_epoch, args.epoch):
 
 test_c_acc = test_c(net, test_data, './data/cifar/CIFAR-10-C/')
 
-torch.save(net.state_dict(), './model/weights')
+checkpoint(net)
