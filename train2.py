@@ -244,4 +244,4 @@ for epoch in range(start_epoch, args.epoch):
         logwriter.writerow([epoch, train_loss, reg_loss, train_acc, test_loss,
                             test_acc])
 
-test_c_acc = test_c(net, testloader, './data/cifar/CIFAR-10-C/')
+test_c_acc = test_c(net, test_data, './data/cifar/CIFAR-10-C/')
