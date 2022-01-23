@@ -196,7 +196,7 @@ def test(net, test_loader):
     acc = 100.*correct/total
     if acc > best_acc:
         best_acc = acc
-    return (test_loss/batch_idx, acc)
+    return test_loss/batch_idx, acc
 
 def test_c(net, test_data, base_path):
     """Evaluate network on given corrupted dataset."""
