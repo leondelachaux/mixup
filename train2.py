@@ -231,7 +231,7 @@ def checkpoint(net):
 def adjust_learning_rate(optimizer, epoch):
     """decrease the learning rate at 100 and 150 epoch"""
     lr = args.lr
-    if epoch >= 100:
+    if epoch >= 80:
         lr /= 10
     if epoch >= 150:
         lr /= 10
