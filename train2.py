@@ -246,4 +246,4 @@ for epoch in range(start_epoch, args.epoch):
 
 test_c_acc = test_c(net, test_data, './data/cifar/CIFAR-10-C/')
 
-torch.save(net.state_dict(), 'model/weights')
+torch.save(net.state_dict(), './model/weights')
