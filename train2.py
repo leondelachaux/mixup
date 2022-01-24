@@ -21,6 +21,7 @@ import torchvision.datasets as datasets
 
 from models.allconv import AllConvNet
 from models.densenet import densenet
+from models.resnext import resnext29
 
 import models
 from utils import progress_bar
@@ -100,7 +101,7 @@ if args.resume:
 else:
     print('==> Building model..')
     # net = models.__dict__[args.model]()
-    net = densenet(num_classes=num_classes)
+    net = resnext29(num_classes=num_classes)
 
 if not os.path.isdir('results'):
     os.mkdir('results')
