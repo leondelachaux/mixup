@@ -1,97 +1,144 @@
-'''ResNeXt in PyTorch.
-
-See the paper "Aggregated Residual Transformations for Deep Neural Networks" for more details.
-'''
-import torch
+"""ResNeXt implementation (https://arxiv.org/abs/1611.05431)."""
+import math
 import torch.nn as nn
+from torch.nn import init
 import torch.nn.functional as F
 
-from torch.autograd import Variable
+
+class ResNeXtBottleneck(nn.Module):
+  """ResNeXt Bottleneck Block type C (https://github.com/facebookresearch/ResNeXt/blob/master/models/resnext.lua)."""
+  expansion = 4
+
+  def __init__(self,
+               inplanes,
+               planes,
+               cardinality,
+               base_width,
+               stride=1,
+               downsample=None):
+    super(ResNeXtBottleneck, self).__init__()
+
+    dim = int(math.floor(planes * (base_width / 64.0)))
+
+    self.conv_reduce = nn.Conv2d(
+        inplanes,
+        dim * cardinality,
+        kernel_size=1,
+        stride=1,
+        padding=0,
+        bias=False)
+    self.bn_reduce = nn.BatchNorm2d(dim * cardinality)
+
+    self.conv_conv = nn.Conv2d(
+        dim * cardinality,
+        dim * cardinality,
+        kernel_size=3,
+        stride=stride,
+        padding=1,
+        groups=cardinality,
+        bias=False)
+    self.bn = nn.BatchNorm2d(dim * cardinality)
+
+    self.conv_expand = nn.Conv2d(
+        dim * cardinality,
+        planes * 4,
+        kernel_size=1,
+        stride=1,
+        padding=0,
+        bias=False)
+    self.bn_expand = nn.BatchNorm2d(planes * 4)
+
+    self.downsample = downsample
+
+  def forward(self, x):
+    residual = x
+
+    bottleneck = self.conv_reduce(x)
+    bottleneck = F.relu(self.bn_reduce(bottleneck), inplace=True)
+
+    bottleneck = self.conv_conv(bottleneck)
+    bottleneck = F.relu(self.bn(bottleneck), inplace=True)
+
+    bottleneck = self.conv_expand(bottleneck)
+    bottleneck = self.bn_expand(bottleneck)
+
+    if self.downsample is not None:
+      residual = self.downsample(x)
+
+    return F.relu(residual + bottleneck, inplace=True)
 
 
-class Block(nn.Module):
-    '''Grouped convolution block.'''
-    expansion = 2
+class CifarResNeXt(nn.Module):
+  """ResNext optimized for the Cifar dataset, as specified in https://arxiv.org/pdf/1611.05431.pdf."""
 
-    def __init__(self, in_planes, cardinality=32, bottleneck_width=4, stride=1):
-        super(Block, self).__init__()
-        group_width = cardinality * bottleneck_width
-        self.conv1 = nn.Conv2d(in_planes, group_width, kernel_size=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(group_width)
-        self.conv2 = nn.Conv2d(group_width, group_width, kernel_size=3, stride=stride, padding=1, groups=cardinality, bias=False)
-        self.bn2 = nn.BatchNorm2d(group_width)
-        self.conv3 = nn.Conv2d(group_width, self.expansion*group_width, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(self.expansion*group_width)
+  def __init__(self, block, depth, cardinality, base_width, num_classes):
+    super(CifarResNeXt, self).__init__()
 
-        self.shortcut = nn.Sequential()
-        if stride != 1 or in_planes != self.expansion*group_width:
-            self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion*group_width, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(self.expansion*group_width)
-            )
+    # Model type specifies number of layers for CIFAR-10 and CIFAR-100 model
+    assert (depth - 2) % 9 == 0, 'depth should be one of 29, 38, 47, 56, 101'
+    layer_blocks = (depth - 2) // 9
 
-    def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = F.relu(self.bn2(self.conv2(out)))
-        out = self.bn3(self.conv3(out))
-        out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+    self.cardinality = cardinality
+    self.base_width = base_width
+    self.num_classes = num_classes
+
+    self.conv_1_3x3 = nn.Conv2d(3, 64, 3, 1, 1, bias=False)
+    self.bn_1 = nn.BatchNorm2d(64)
+
+    self.inplanes = 64
+    self.stage_1 = self._make_layer(block, 64, layer_blocks, 1)
+    self.stage_2 = self._make_layer(block, 128, layer_blocks, 2)
+    self.stage_3 = self._make_layer(block, 256, layer_blocks, 2)
+    self.avgpool = nn.AvgPool2d(8)
+    self.classifier = nn.Linear(256 * block.expansion, num_classes)
+
+    for m in self.modules():
+      if isinstance(m, nn.Conv2d):
+        n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+        m.weight.data.normal_(0, math.sqrt(2. / n))
+      elif isinstance(m, nn.BatchNorm2d):
+        m.weight.data.fill_(1)
+        m.bias.data.zero_()
+      elif isinstance(m, nn.Linear):
+        init.kaiming_normal(m.weight)
+        m.bias.data.zero_()
+
+  def _make_layer(self, block, planes, blocks, stride=1):
+    downsample = None
+    if stride != 1 or self.inplanes != planes * block.expansion:
+      downsample = nn.Sequential(
+          nn.Conv2d(
+              self.inplanes,
+              planes * block.expansion,
+              kernel_size=1,
+              stride=stride,
+              bias=False),
+          nn.BatchNorm2d(planes * block.expansion),
+      )
+
+    layers = []
+    layers.append(
+        block(self.inplanes, planes, self.cardinality, self.base_width, stride,
+              downsample))
+    self.inplanes = planes * block.expansion
+    for _ in range(1, blocks):
+      layers.append(
+          block(self.inplanes, planes, self.cardinality, self.base_width))
+
+    return nn.Sequential(*layers)
+
+  def forward(self, x):
+    x = self.conv_1_3x3(x)
+    x = F.relu(self.bn_1(x), inplace=True)
+    x = self.stage_1(x)
+    x = self.stage_2(x)
+    x = self.stage_3(x)
+    x = self.avgpool(x)
+    x = x.view(x.size(0), -1)
+    return self.classifier(x)
 
 
-class ResNeXt(nn.Module):
-    def __init__(self, num_blocks, cardinality, bottleneck_width, num_classes=10):
-        super(ResNeXt, self).__init__()
-        self.cardinality = cardinality
-        self.bottleneck_width = bottleneck_width
-        self.in_planes = 64
-
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.layer1 = self._make_layer(num_blocks[0], 1)
-        self.layer2 = self._make_layer(num_blocks[1], 2)
-        self.layer3 = self._make_layer(num_blocks[2], 2)
-        # self.layer4 = self._make_layer(num_blocks[3], 2)
-        self.linear = nn.Linear(cardinality*bottleneck_width*8, num_classes)
-
-    def _make_layer(self, num_blocks, stride):
-        strides = [stride] + [1]*(num_blocks-1)
-        layers = []
-        for stride in strides:
-            layers.append(Block(self.in_planes, self.cardinality, self.bottleneck_width, stride))
-            self.in_planes = Block.expansion * self.cardinality * self.bottleneck_width
-        # Increase bottleneck_width by 2 after each stage.
-        self.bottleneck_width *= 2
-        return nn.Sequential(*layers)
-
-    def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        # out = self.layer4(out)
-        out = F.avg_pool2d(out, 8)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
-
-
-def ResNeXt29_2x64d():
-    return ResNeXt(num_blocks=[3,3,3], cardinality=2, bottleneck_width=64)
-
-def ResNeXt29_4x64d():
-    return ResNeXt(num_blocks=[3,3,3], cardinality=4, bottleneck_width=64)
-
-def ResNeXt29_8x64d():
-    return ResNeXt(num_blocks=[3,3,3], cardinality=8, bottleneck_width=64)
-
-def ResNeXt29_32x4d():
-    return ResNeXt(num_blocks=[3,3,3], cardinality=32, bottleneck_width=4)
-
-def test_resnext():
-    net = ResNeXt29_2x64d()
-    x = torch.randn(1,3,32,32)
-    y = net(Variable(x))
-    print(y.size())
-
-# test_resnext()
+def resnext29(num_classes=10, cardinality=4, base_width=32):
+  model = CifarResNeXt(ResNeXtBottleneck, 29, cardinality, base_width,
+                       num_classes)
+  return model
