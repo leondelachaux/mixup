@@ -266,6 +266,6 @@ for epoch in range(start_epoch, args.epoch):
         logwriter.writerow([epoch, train_loss, reg_loss, train_acc, test_loss,
                             test_acc])
 
-test_c_acc = test_c(net, test_data, './data/cifar/CIFAR-10-C/')
+test_c_acc = test_c(net, test_data,  base_c_path)
 print('Mean Corruption Error: {:.3f}'.format(100 - 100. * test_c_acc))
 checkpoint(net)
