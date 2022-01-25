@@ -34,6 +34,13 @@ CORRUPTIONS = [
 ]
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
+parser.add_argument(
+    '--dataset',
+    type=str,
+    default='cifar10',
+    choices=['cifar10', 'cifar100'],
+    help='Choose between CIFAR-10, CIFAR-100.')
+
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
@@ -72,12 +79,16 @@ test_transform = transforms.Compose([
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 ])
 
-train_data = datasets.CIFAR10(
-    './data/cifar', train=True, transform=train_transform, download=True)
-test_data = datasets.CIFAR10(
-    './data/cifar', train=False, transform=test_transform, download=True)
-base_c_path = './data/cifar/CIFAR-10-C/'
-num_classes = 10
+if args.dataset == 'cifar10':
+    train_data = datasets.CIFAR10('./data/cifar', train=True, transform=train_transform, download=True)
+    test_data = datasets.CIFAR10('./data/cifar', train=False, transform=test_transform, download=True)
+    base_c_path = './data/cifar/CIFAR-10-C/'
+    num_classes = 10
+else:
+    train_data = datasets.CIFAR100('./data/cifar', train=True, transform=train_transform, download=True)
+    test_data = datasets.CIFAR100('./data/cifar', train=False, transform=test_transform, download=True)
+    base_c_path = './data/cifar/CIFAR-100-C/'
+    num_classes = 100
 
 trainloader = torch.utils.data.DataLoader(train_data,
                                           batch_size=args.batch_size,
