@@ -112,7 +112,7 @@ if args.resume:
 else:
     print('==> Building model..')
     # net = models.__dict__[args.model]()
-    net = resnext29(num_classes=num_classes)
+    net = AllConvNet(num_classes=num_classes)
 
 if not os.path.isdir('results'):
     os.mkdir('results')
