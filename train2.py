@@ -57,6 +57,9 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--decay', default=1e-4, type=float, help='weight decay')
 parser.add_argument('--alpha', default=1., type=float,
                     help='mixup interpolation coefficient (default: 1)')
+parser.add_argument('--layers', default=40, type=int, help='total number of layers')
+parser.add_argument('--widen-factor', default=2, type=int, help='Widen factor')
+parser.add_argument('--droprate', default=0.0, type=float, help='Dropout probability')
 args = parser.parse_args()
 
 use_cuda = torch.cuda.is_available()
@@ -113,7 +116,7 @@ if args.resume:
 else:
     print('==> Building model..')
     # net = models.__dict__[args.model]()
-    net = AllConvNet(num_classes=num_classes)
+    net = net = WideResNet(args.layers, num_classes, args.widen_factor, args.droprate)
 
 if not os.path.isdir('results'):
     os.mkdir('results')
