@@ -116,7 +116,7 @@ if args.resume:
 else:
     print('==> Building model..')
     # net = models.__dict__[args.model]()
-    net = net = WideResNet(args.layers, num_classes, args.widen_factor, args.droprate)
+    net = densenet(num_classes=num_classes)
 
 if not os.path.isdir('results'):
     os.mkdir('results')
