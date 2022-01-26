@@ -22,6 +22,7 @@ import torchvision.datasets as datasets
 from models.allconv import AllConvNet
 from models.densenet import densenet
 from models.resnext import resnext29
+from models.wideresnet import WideResNet
 
 import models
 from utils import progress_bar
