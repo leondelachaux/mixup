@@ -263,7 +263,7 @@ if not os.path.exists(logname):
         logwriter.writerow(['epoch', 'train loss', 'reg loss', 'train acc',
                             'test loss', 'test acc'])
 
-log_path = os.path.join(args.save, args.dataset + '_' + args.model + '_training_log.csv')
+log_path = os.path.join('./snapshots', 'training_log.csv')
 with open(log_path, 'w') as f:
     f.write('epoch,time(s),train_loss,test_loss,test_error(%)\n')        
         
