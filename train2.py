@@ -24,6 +24,8 @@ from models.densenet import densenet
 from models.resnext import resnext29
 from models.wideresnet import WideResNet
 
+import time
+
 import models
 from utils import progress_bar
 
@@ -261,14 +263,23 @@ if not os.path.exists(logname):
         logwriter.writerow(['epoch', 'train loss', 'reg loss', 'train acc',
                             'test loss', 'test acc'])
 
+log_path = os.path.join(args.save, args.dataset + '_' + args.model + '_training_log.csv')
+with open(log_path, 'w') as f:
+    f.write('epoch,time(s),train_loss,test_loss,test_error(%)\n')        
+        
 for epoch in range(start_epoch, args.epoch):
+    begin_time = time.time()
     train_loss, reg_loss, train_acc = train(epoch)
     test_loss, test_acc = test(net, testloader)
     adjust_learning_rate(optimizer, epoch)
-    with open(logname, 'a') as logfile:
-        logwriter = csv.writer(logfile, delimiter=',')
-        logwriter.writerow([epoch, train_loss, reg_loss, train_acc, test_loss,
-                            test_acc])
+    with open(log_path, 'a') as f:
+        f.write('%03d,%05d,%0.6f,%0.5f,%0.2f\n' % (
+            (epoch + 1),
+            time.time() - begin_time,
+            train_loss,
+            test_loss,
+            100 - test_acc,
+        ))
 
 test_c_acc = test_c(net, test_data,  base_c_path)
 print('Mean Corruption Error: {:.3f}'.format(100 - 100. * test_c_acc))
