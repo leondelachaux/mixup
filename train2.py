@@ -263,6 +263,11 @@ if not os.path.exists(logname):
         logwriter.writerow(['epoch', 'train loss', 'reg loss', 'train acc',
                             'test loss', 'test acc'])
 
+if not os.path.exists('./snapshots'):
+    os.makedirs('./snapshots')
+if not os.path.isdir('./snapshots'):
+    raise Exception('%s is not a dir' % './snapshots') 
+
 log_path = os.path.join('./snapshots', 'training_log.csv')
 with open(log_path, 'w') as f:
     f.write('epoch,time(s),train_loss,test_loss,test_error(%)\n')        
