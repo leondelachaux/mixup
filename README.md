@@ -22,7 +22,7 @@ url={https://openreview.net/forum?id=r1Ddp1-Rb},
 ## Training
 Use `python train2.py` to train a new model.
 I ran the code on a kaggle notebook, but it also works on Google Colab.
-First, I import the CIFAR-10-C and CIFAR-100-C datasets with
+First, import the CIFAR-10-C and CIFAR-100-C datasets with
 
 ```
 !mkdir -p ./data/cifar
@@ -31,7 +31,7 @@ First, I import the CIFAR-10-C and CIFAR-100-C datasets with
 !tar -xvf CIFAR-100-C.tar -C data/cifar/
 !tar -xvf CIFAR-10-C.tar -C data/cifar/
 ```
-Then I clone the repository with
+Then, clone the repository with
 ```
 !git clone https://github.com/leondelachaux/mixup
 ```
@@ -39,7 +39,8 @@ Then I clone the repository with
 import sys
 sys.path.append('mixup')
 ```
-and finally I can just choose the model I want to train as well as the dataset with
+and finally choose the model you want to train as well as the dataset with
 ```
 !python mixup/train2.py --dataset cifar10 --model allcanv --lr 0.1 --epoch 200 --decay 1e-4
 ```
+The possible models are wrn, allconv, densenet and resnext and the possible datasets are cifar10 and cifar100
