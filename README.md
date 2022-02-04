@@ -1,22 +1,7 @@
-# Mixup-CIFAR10
-By [Hongyi Zhang](http://web.mit.edu/~hongyiz/www/), [Moustapha Cisse](https://mine.kaust.edu.sa/Pages/cisse.aspx), [Yann Dauphin](http://dauphin.io/), [David Lopez-Paz](https://lopezpaz.org/).
-
-Facebook AI Research
-
 ## Introduction
+This repository contains code from https://github.com/facebookresearch/mixup-cifar10.
 
-Mixup is a generic and straightforward data augmentation principle.
-In essence, mixup trains a neural network on convex combinations of pairs of
-examples and their labels. By doing so, mixup regularizes the neural network to
-favor simple linear behavior in-between training examples.
-
-This repository contains the implementation used for the results in
-our paper (https://arxiv.org/abs/1710.09412).
-
-## Citation
-
-If you use this method or this code in your paper, then please cite it:
-
+## Reference
 ```
 @article{
 zhang2018mixup,
@@ -35,15 +20,26 @@ url={https://openreview.net/forum?id=r1Ddp1-Rb},
 * A [PyTorch installation](http://pytorch.org/)
 
 ## Training
-Use `python train.py` to train a new model.
-Here is an example setting:
+Use `python train2.py` to train a new model.
+I ran the code on a kaggle notebook, but it also works on Google Colab.
+First, I import the CIFAR-10-C and CIFAR-100-C datasets with
+
 ```
-$ CUDA_VISIBLE_DEVICES=0 python train.py --lr=0.1 --seed=20170922 --decay=1e-4
+!mkdir -p ./data/cifar
+!curl -O https://zenodo.org/record/2535967/files/CIFAR-10-C.tar
+!curl -O https://zenodo.org/record/3555552/files/CIFAR-100-C.tar
+!tar -xvf CIFAR-100-C.tar -C data/cifar/
+!tar -xvf CIFAR-10-C.tar -C data/cifar/
 ```
-
-## License
-
-This project is CC-BY-NC-licensed.
-
-## Acknowledgement
-The CIFAR-10 reimplementation of _mixup_ is adapted from the [pytorch-cifar](https://github.com/kuangliu/pytorch-cifar) repository by [kuangliu](https://github.com/kuangliu).
+Then I clone the repository with
+```
+!git clone https://github.com/leondelachaux/mixup
+```
+```
+import sys
+sys.path.append('mixup')
+```
+and finally I can just choose the model I want to train as well as the dataset with
+```
+!python mixup/train2.py --dataset cifar10 --model GoogLeNet --lr 0.1 --epoch 200 --decay 1e-4
+```
