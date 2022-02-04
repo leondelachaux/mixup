@@ -117,8 +117,16 @@ if args.resume:
     torch.set_rng_state(rng_state)
 else:
     print('==> Building model..')
-    # net = models.__dict__[args.model]()
-    net = resnext29(num_classes=num_classes)
+    # Create model
+    if args.model == 'densenet':
+        net = densenet(num_classes=num_classes)
+    elif args.model == 'wrn':
+        net = WideResNet(40, num_classes, 2, 0)
+    elif args.model == 'allconv':
+        net = AllConvNet(num_classes)
+    elif args.model == 'resnext':
+        net = resnext29(num_classes=num_classes)
+
 
 if not os.path.isdir('results'):
     os.mkdir('results')
