@@ -41,5 +41,5 @@ sys.path.append('mixup')
 ```
 and finally I can just choose the model I want to train as well as the dataset with
 ```
-!python mixup/train2.py --dataset cifar10 --model GoogLeNet --lr 0.1 --epoch 200 --decay 1e-4
+!python mixup/train2.py --dataset cifar10 --model allcanv --lr 0.1 --epoch 200 --decay 1e-4
 ```
